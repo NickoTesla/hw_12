@@ -21,7 +21,7 @@ class Name(Field):
     pass
 
 
-class Phone():
+class Phone(Field):
     def __init__(self, value):
         self.__value = None
         self.value = value
@@ -67,10 +67,6 @@ class Birthday(Field):
     def __get__(self, instance, owner):
         return self._value
 
-    def __set__(self, instance, value):
-        self.validate(value)
-        self._value = value
-
 
 @property
 def value(self):
@@ -95,7 +91,7 @@ class Record:
         self.phones.append(Phone(phone))
 
     def remove_phone(self, phone):
-        self.phones = [p for p in self.phones if p.value != phone]
+        self.phones = [p for p in self.phones if str(p) != phone]
 
     def edit_phone(self, old_phone, new_phone):
         for phone in self.phones:
@@ -113,26 +109,18 @@ class Record:
         delta = birthday - today
         return delta.days
 
-class AddressBook(UserDict):
-    def add_record(self, record):
-        self.data[record.name.value.lower()] = record
-
-    def remove_record(self, name):
-        del self.data[name.lower()]
-
-    def edit_record(self, name, record):
-        self.data[name.lower()] = record
-
-
-contacts = AddressBook()
-
-
 class AddressBook:
     def __init__(self):
-        self.contacts = []
+        self.contacts = {}
 
     def add_contact(self, contact):
-        self.contacts.append(contact)
+        self.contacts[contact.name.lower()] = contact
+
+    def remove_contact(self, name):
+        del self.contacts[name.lower()]
+
+    def edit_contact(self, name, contact):
+        self.contacts[name.lower()] = contact
 
     def save_to_file(self, file_path):
         with open(file_path, 'w') as f:
@@ -140,27 +128,16 @@ class AddressBook:
 
     def load_from_file(self, file_path):
         with open(file_path, 'r') as f:
-            self.contacts = json.load(f)
-
-class AddressBook:
-    def __init__(self):
-        self.contacts = []
-
-    def add_contact(self, contact):
-        self.contacts.append(contact)
-
-    def save_to_file(self, file_path):
-        ...
-
-    def load_from_file(self, file_path):
-        ...
+            self.contacts = {c['name'].lower(): Contact(**c) for c in json.load(f)}
 
     def search_contacts(self, query):
         results = []
-        for contact in self.contacts:
+        for contact in self.contacts.values():
             if query.lower() in contact.name.lower() or query in contact.phone:
                 results.append(contact)
         return results
+
+contacts = AddressBook()
 
 
 def input_error(func):
